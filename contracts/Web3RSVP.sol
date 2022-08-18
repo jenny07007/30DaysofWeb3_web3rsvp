@@ -5,17 +5,15 @@ contract Web3RSVP {
     // custom events
     event NewEventCreated(
         bytes32 eventID,
-        address createorAddress,
+        address creatorAddress,
         uint256 eventTimestamp,
         uint256 maxCapacity,
         uint256 deposit,
         string eventDataCID
     );
-    event NewRSVP(bytes32 eventID, address confirmAttendee);
-    event ConfirmAttendee(bytes32 eventID, address confirmAttendee);
-    event DepositPaidOut(bytes32 eventID);
-
-    // ---
+    event NewRSVP(bytes32 eventID, address attendeeAddress);
+    event ConfirmedAttendee(bytes32 eventID, address attendeeAddress);
+    event DepositsPaidOut(bytes32 eventID);
 
     struct CreateEvent {
         bytes32 eventId;
@@ -83,7 +81,7 @@ contract Web3RSVP {
         CreateEvent storage myEvent = idToEvent[eventId];
 
         // validations
-        require(msg.value == myEvent.deposit, "NOT ENOUGH DEPOSIT");
+        require(msg.value == myEvent.deposit, "NOT ENOUGH");
         require(block.timestamp <= myEvent.eventTimestamp, "ALREADY HAPPENED");
         require(
             myEvent.confirmedRSVPs.length < myEvent.maxCapacity,
@@ -92,18 +90,18 @@ contract Web3RSVP {
         for (uint8 i = 0; i < myEvent.confirmedRSVPs.length; i++) {
             require(
                 myEvent.confirmedRSVPs[i] != msg.sender,
-                "You have already RSVP'd"
+                "ALREADY CONFIRMED"
             );
         }
 
-        myEvent.confirmedRSVPs.push(msg.sender);
+        myEvent.confirmedRSVPs.push(payable(msg.sender));
 
         // emit event
         emit NewRSVP(eventId, msg.sender);
     }
 
     function confirmAllAttendees(bytes32 eventId) external {
-        CreateEvent storage myEvent = idToEvent[eventId];
+        CreateEvent memory myEvent = idToEvent[eventId];
 
         require(msg.sender == myEvent.eventOwner, "NOT AUTHORIZED");
 
@@ -148,11 +146,11 @@ contract Web3RSVP {
 
         require(sent, "Failed to send Ether");
         // emit event
-        emit ConfirmAttendee(eventId, attendee);
+        emit ConfirmedAttendee(eventId, attendee);
     }
 
     function withdrawUnclaimedDeposits(bytes32 eventId) external {
-        CreateEvent storage myEvent = idToEvent[eventId];
+        CreateEvent memory myEvent = idToEvent[eventId];
 
         // check that the paidOut boolean strill equals false
         require(!myEvent.paidOut, "ALREADY PAID");
@@ -173,12 +171,12 @@ contract Web3RSVP {
         // send the payout to the owner
         (bool sent, ) = msg.sender.call{value: payout}("");
         if (!sent) {
-            myEvent.paidOut = false;
+            myEvent.paidOut == false;
         }
 
         require(sent, "Failed to send Ether");
 
         // emit event
-        emit DepositPaidOut(eventId);
+        emit DepositsPaidOut(eventId);
     }
 }

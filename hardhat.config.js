@@ -1,9 +1,9 @@
-require('@nomiclabs/hardhat-waffle');
-require('dotenv').config();
+require("@nomiclabs/hardhat-waffle");
+require("dotenv").config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
-  solidity: '0.8.4',
+  solidity: "0.8.4",
   networks: {
     hardhat: {
       chainId: 1337,
